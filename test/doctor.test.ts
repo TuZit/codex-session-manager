@@ -1,3 +1,7 @@
+import { chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { buildDoctorReport, runDoctorCommand } from '../src/commands/doctor.js';
@@ -41,5 +45,33 @@ describe('runDoctorCommand', () => {
         journalMode: 'delete',
       }),
     );
+  });
+
+  it('uses the configured sqlite3 command for every sqlite interaction', async () => {
+    const fixtureHome = await createFixtureHome();
+    const shimDir = await mkdtemp(join(tmpdir(), 'codex-sqlite-shim-'));
+    const logPath = join(shimDir, 'sqlite3.log');
+    const shimPath = join(shimDir, 'sqlite3');
+
+    await writeFile(
+      shimPath,
+      `#!/bin/zsh
+echo "$@" >> "${logPath}"
+exec sqlite3 "$@"
+`,
+    );
+    await chmod(shimPath, 0o755);
+
+    const report = await buildDoctorReport({
+      codexHome: fixtureHome,
+      sqlite3Command: shimPath,
+    });
+
+    const log = await readFile(logPath, 'utf8');
+
+    expect(report.ok).toBe(true);
+    expect(log).toContain('-version');
+    expect(log).toContain('PRAGMA journal_mode;');
+    expect(log).toContain('PRAGMA table_info(threads);');
   });
 });

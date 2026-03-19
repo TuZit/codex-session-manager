@@ -1,5 +1,7 @@
 import { execFileSync } from 'node:child_process';
 
+const SQLITE_FIELD_SEPARATOR = '\u001f';
+
 export type SqliteBinaryCheck = {
   command: string;
   error?: string;
@@ -27,7 +29,9 @@ export function checkSqlite3Binary(command = 'sqlite3'): SqliteBinaryCheck {
 }
 
 function runSqliteLines(stateDbPath: string, sql: string, command = 'sqlite3'): string[] {
-  const stdout = execFileSync(command, [stateDbPath, sql], { encoding: 'utf8' }).trim();
+  const stdout = execFileSync(command, ['-separator', SQLITE_FIELD_SEPARATOR, stateDbPath, sql], {
+    encoding: 'utf8',
+  }).trim();
 
   if (stdout === '') {
     return [];
@@ -41,7 +45,7 @@ export async function listThreads(stateDbPath: string): Promise<ThreadRow[]> {
     stateDbPath,
     "SELECT id, title, updated_at, rollout_path FROM threads WHERE archived = 0 ORDER BY updated_at DESC, id DESC;",
   ).map((line) => {
-    const [id, title, updatedAt, rolloutPath] = line.split('|');
+    const [id, title, updatedAt, rolloutPath] = line.split(SQLITE_FIELD_SEPARATOR);
 
     return {
       id,
@@ -52,7 +56,16 @@ export async function listThreads(stateDbPath: string): Promise<ThreadRow[]> {
   });
 }
 
-export async function getJournalMode(stateDbPath: string): Promise<string> {
-  const [journalMode = 'unknown'] = runSqliteLines(stateDbPath, 'PRAGMA journal_mode;');
+export async function getJournalMode(
+  stateDbPath: string,
+  options: {
+    sqlite3Command?: string;
+  } = {},
+): Promise<string> {
+  const [journalMode = 'unknown'] = runSqliteLines(
+    stateDbPath,
+    'PRAGMA journal_mode;',
+    options.sqlite3Command,
+  );
   return journalMode;
 }

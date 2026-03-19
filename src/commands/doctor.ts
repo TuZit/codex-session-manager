@@ -45,8 +45,12 @@ export async function buildDoctorReport(
   let schema = EMPTY_SCHEMA_REPORT;
 
   if (sqlite3.ok && pathCheck.ok) {
-    journalMode = await getJournalMode(paths.stateDbPath);
-    schema = await inspectCodexSchema(paths.stateDbPath);
+    journalMode = await getJournalMode(paths.stateDbPath, {
+      sqlite3Command: options.sqlite3Command,
+    });
+    schema = await inspectCodexSchema(paths.stateDbPath, {
+      sqlite3Command: options.sqlite3Command,
+    });
   }
 
   return {
