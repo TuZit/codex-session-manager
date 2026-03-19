@@ -9,6 +9,12 @@ const REQUIRED_STORE_ENTRIES: Array<keyof Pick<
   'historyPath' | 'sessionIndexPath' | 'stateDbPath'
 >> = ['stateDbPath', 'sessionIndexPath', 'historyPath'];
 
+export type CodexStorePathCheck = {
+  missingRequiredPaths: Array<(typeof REQUIRED_STORE_ENTRIES)[number]>;
+  ok: boolean;
+  paths: CodexStorePaths;
+};
+
 export function resolveCodexHome(options: ResolveCodexHomeOptions = {}): CodexStorePaths {
   const platform = options.platform ?? process.platform;
 
@@ -28,13 +34,33 @@ export function resolveCodexHome(options: ResolveCodexHomeOptions = {}): CodexSt
 }
 
 export async function assertCodexStoreFiles(paths: CodexStorePaths): Promise<void> {
+  const result = await checkCodexStoreFiles(paths);
+
+  if (!result.ok) {
+    const [firstMissingKey] = result.missingRequiredPaths;
+
+    if (firstMissingKey) {
+      throw new Error(`Missing required Codex store entry: ${paths[firstMissingKey]}`);
+    }
+  }
+}
+
+export async function checkCodexStoreFiles(paths: CodexStorePaths): Promise<CodexStorePathCheck> {
+  const missingRequiredPaths: CodexStorePathCheck['missingRequiredPaths'] = [];
+
   for (const key of REQUIRED_STORE_ENTRIES) {
     try {
       await access(paths[key]);
     } catch {
-      throw new Error(`Missing required Codex store entry: ${paths[key]}`);
+      missingRequiredPaths.push(key);
     }
   }
+
+  return {
+    missingRequiredPaths,
+    ok: missingRequiredPaths.length === 0,
+    paths,
+  };
 }
 
 export type { CodexStorePaths, ResolveCodexHomeOptions } from './session-types.js';
