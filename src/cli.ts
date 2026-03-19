@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 
 import { pathToFileURL } from 'node:url';
+import { parseArgs } from 'node:util';
+
+import { runDoctorCommand } from './commands/doctor.js';
+import { runListCommand } from './commands/list.js';
+import { runSearchCommand } from './commands/search.js';
 
 export type CliIO = {
   stderr: (chunk: string) => void;
@@ -14,13 +19,13 @@ Usage:
 
 Available today:
   -h, --help Show this help message
-
-Planned commands:
   list       List recent Codex sessions
   search     Search sessions by id or title
+  doctor     Validate the local Codex store setup
+
+Planned commands:
   delete     Preview or delete a session
   restore    Restore a deleted session from backup
-  doctor     Validate the local Codex store setup
 `;
 
 export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<number> {
@@ -29,9 +34,74 @@ export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<num
     return 0;
   }
 
-  io.stderr(`Unknown command: ${argv[0]}\n`);
+  const [command, ...commandArgs] = argv;
+
+  switch (command) {
+    case 'list': {
+      const parsed = parseCommandArgs(commandArgs);
+      return runListCommand({
+        codexHome: parsed.codexHome,
+        io,
+        json: parsed.json,
+      });
+    }
+    case 'search': {
+      const parsed = parseCommandArgs(commandArgs);
+      const query = parsed.positionals[0];
+
+      if (!query) {
+        io.stderr('Missing required search query.\n');
+        return 1;
+      }
+
+      return runSearchCommand({
+        codexHome: parsed.codexHome,
+        io,
+        json: parsed.json,
+        query,
+      });
+    }
+    case 'doctor': {
+      const parsed = parseCommandArgs(commandArgs);
+      return runDoctorCommand({
+        codexHome: parsed.codexHome,
+        io,
+        json: parsed.json,
+      });
+    }
+    default:
+      break;
+  }
+
+  io.stderr(`Unknown command: ${command}\n`);
   io.stderr('Run with --help to see available commands.\n');
   return 1;
+}
+
+function parseCommandArgs(args: string[]): {
+  codexHome?: string;
+  json: boolean;
+  positionals: string[];
+} {
+  const parsed = parseArgs({
+    allowPositionals: true,
+    args,
+    options: {
+      'codex-home': {
+        type: 'string',
+      },
+      json: {
+        type: 'boolean',
+      },
+    },
+    strict: true,
+  });
+
+  return {
+    codexHome: parsed.values['codex-home'],
+    json: parsed.values.json ?? false,
+    positionals: parsed.positionals,
+  };
 }
 
 const defaultIo: CliIO = {
