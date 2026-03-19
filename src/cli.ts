@@ -6,6 +6,7 @@ import { parseArgs } from 'node:util';
 import { runDoctorCommand } from './commands/doctor.js';
 import { runDeleteCommand } from './commands/delete.js';
 import { runListCommand } from './commands/list.js';
+import { runRestoreCommand } from './commands/restore.js';
 import { runSearchCommand } from './commands/search.js';
 
 export type CliIO = {
@@ -24,8 +25,6 @@ Available today:
   search     Search sessions by id or title
   doctor     Validate the local Codex store setup
   delete     Preview or delete a session
-
-Planned commands:
   restore    Restore a deleted session from backup
 `;
 
@@ -81,6 +80,22 @@ export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<num
         query: parsed.positionals[0],
         title: parsed.title,
         yes: parsed.yes,
+      });
+    }
+    case 'restore': {
+      const parsed = parseCommandArgs(commandArgs);
+      const backupId = parsed.positionals[0];
+
+      if (!backupId) {
+        io.stderr('Missing required backup id.\n');
+        return 1;
+      }
+
+      return runRestoreCommand({
+        backupId,
+        codexHome: parsed.codexHome,
+        io,
+        json: parsed.json,
       });
     }
     default:

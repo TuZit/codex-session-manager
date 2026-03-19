@@ -198,6 +198,16 @@ COMMIT;
   );
 }
 
+export async function executeSqlStatements(
+  stateDbPath: string,
+  sql: string,
+  options: {
+    sqlite3Command?: string;
+  } = {},
+): Promise<void> {
+  runSqliteText(stateDbPath, sql, { command: options.sqlite3Command });
+}
+
 export async function getJournalMode(
   stateDbPath: string,
   options: {

@@ -18,6 +18,6 @@ describe('runCli', () => {
     expect(stdout.join('')).toContain('Usage:');
     expect(stdout.join('')).toContain('Available today:');
     expect(stdout.join('')).toContain('-h, --help');
-    expect(stdout.join('')).toContain('Planned commands:');
+    expect(stdout.join('')).toContain('restore');
   });
 });

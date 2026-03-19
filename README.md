@@ -6,17 +6,12 @@ It exists for the case where Codex does not yet expose an official delete UI or 
 
 ## Status
 
-The current implementation is read-only.
-
 Available today:
 
 - `list`
 - `search`
 - `doctor`
 - `delete`
-
-Planned next:
-
 - `restore`
 
 This is a local store management tool, not an official Codex extension or API integration.
@@ -80,8 +75,6 @@ Available today:
   search     Search sessions by id or title
   doctor     Validate the local Codex store setup
   delete     Preview or delete a session
-
-Planned commands:
   restore    Restore a deleted session from backup
 ```
 
@@ -186,6 +179,22 @@ Current behavior:
 - delete creates a backup bundle before mutating local storage
 - delete currently updates SQLite, `session_index.jsonl`, `history.jsonl`, and the rollout file
 
+### `restore <backupId>`
+
+Restore a previously deleted session from its backup bundle:
+
+```bash
+codex-session-manager restore 2026-03-19T08-09-10.111Z-019abc
+codex-session-manager restore 2026-03-19T08-09-10.111Z-019abc --json
+```
+
+Current behavior:
+
+- restore replays backed up SQLite rows
+- restore appends the removed `session_index.jsonl` and `history.jsonl` lines
+- restore moves the quarantined rollout transcript back to its original path
+- restore refuses when the target session id already exists in SQLite
+
 ## Options
 
 ### `--codex-home <path>`
@@ -213,12 +222,14 @@ Available on:
 - `list`
 - `search`
 - `doctor`
+- `delete`
+- `restore`
 
 Use this for scripting or for future editor/extension integration.
 
 ## Safety And Scope
 
-- `list`, `search`, and `doctor` are read-only; `delete` is mutating
+- `delete` and `restore` mutate local Codex storage
 - the tool reads Codex local storage directly instead of using an official Codex API
 - compatibility depends on the currently observed `~/.codex` layout and schema
 - future delete support is intended to be backup-first and conservative, not a blind hard delete
@@ -243,14 +254,12 @@ npm run typecheck
 ## Limitations
 
 - v1 currently supports macOS only
-- restore is not implemented yet
 - the tool reads Codex local storage directly, so future Codex schema changes may require updates here
 - there is no Codex app UI integration yet
 - there is no Windows or Linux support in v1
-- there is no promise of instant Codex UI refresh after future delete operations
+- there is no promise of instant Codex UI refresh after delete or restore operations
 
 ## Roadmap
 
-- add guarded safe-delete with backup bundles
-- add restore from backup
 - keep the core reusable for a future VS Code extension
+- add CI and release automation for npm publish
