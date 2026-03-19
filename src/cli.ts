@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { runDoctorCommand } from './commands/doctor.js';
+import { runDeleteCommand } from './commands/delete.js';
 import { runListCommand } from './commands/list.js';
 import { runSearchCommand } from './commands/search.js';
 
@@ -22,9 +23,9 @@ Available today:
   list       List recent Codex sessions
   search     Search sessions by id or title
   doctor     Validate the local Codex store setup
+  delete     Preview or delete a session
 
 Planned commands:
-  delete     Preview or delete a session
   restore    Restore a deleted session from backup
 `;
 
@@ -69,6 +70,19 @@ export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<num
         json: parsed.json,
       });
     }
+    case 'delete': {
+      const parsed = parseCommandArgs(commandArgs);
+      return runDeleteCommand({
+        apply: parsed.apply,
+        codexHome: parsed.codexHome,
+        id: parsed.id,
+        io,
+        json: parsed.json,
+        query: parsed.positionals[0],
+        title: parsed.title,
+        yes: parsed.yes,
+      });
+    }
     default:
       break;
   }
@@ -79,18 +93,34 @@ export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<num
 }
 
 function parseCommandArgs(args: string[]): {
+  apply: boolean;
   codexHome?: string;
+  id?: string;
   json: boolean;
   positionals: string[];
+  title?: string;
+  yes: boolean;
 } {
   const parsed = parseArgs({
     allowPositionals: true,
     args,
     options: {
+      apply: {
+        type: 'boolean',
+      },
       'codex-home': {
         type: 'string',
       },
+      id: {
+        type: 'string',
+      },
       json: {
+        type: 'boolean',
+      },
+      title: {
+        type: 'string',
+      },
+      yes: {
         type: 'boolean',
       },
     },
@@ -98,9 +128,13 @@ function parseCommandArgs(args: string[]): {
   });
 
   return {
+    apply: parsed.values.apply ?? false,
     codexHome: parsed.values['codex-home'],
+    id: parsed.values.id,
     json: parsed.values.json ?? false,
     positionals: parsed.positionals,
+    title: parsed.values.title,
+    yes: parsed.values.yes ?? false,
   };
 }
 

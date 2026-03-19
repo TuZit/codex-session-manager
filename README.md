@@ -13,10 +13,10 @@ Available today:
 - `list`
 - `search`
 - `doctor`
+- `delete`
 
 Planned next:
 
-- `delete`
 - `restore`
 
 This is a local store management tool, not an official Codex extension or API integration.
@@ -79,9 +79,9 @@ Available today:
   list       List recent Codex sessions
   search     Search sessions by id or title
   doctor     Validate the local Codex store setup
+  delete     Preview or delete a session
 
 Planned commands:
-  delete     Preview or delete a session
   restore    Restore a deleted session from backup
 ```
 
@@ -162,6 +162,30 @@ schemaSupported: true
 - `0` when the environment looks supported
 - `1` when validation fails or the store cannot be inspected
 
+### `delete`
+
+Preview by default:
+
+```bash
+codex-session-manager delete --id 019abc
+codex-session-manager delete "rollback"
+```
+
+Apply the delete:
+
+```bash
+codex-session-manager delete --id 019abc --apply --yes
+codex-session-manager delete "rollback" --apply --yes --json
+```
+
+Current behavior:
+
+- preview mode is the default
+- apply mode requires `--apply --yes`
+- target resolution supports `--id`, `--title`, or a single positional query
+- delete creates a backup bundle before mutating local storage
+- delete currently updates SQLite, `session_index.jsonl`, `history.jsonl`, and the rollout file
+
 ## Options
 
 ### `--codex-home <path>`
@@ -194,10 +218,11 @@ Use this for scripting or for future editor/extension integration.
 
 ## Safety And Scope
 
-- current commands are read-only
+- `list`, `search`, and `doctor` are read-only; `delete` is mutating
 - the tool reads Codex local storage directly instead of using an official Codex API
 - compatibility depends on the currently observed `~/.codex` layout and schema
 - future delete support is intended to be backup-first and conservative, not a blind hard delete
+- delete refuses sessions that look recently active
 
 ## Development
 
@@ -218,7 +243,7 @@ npm run typecheck
 ## Limitations
 
 - v1 currently supports macOS only
-- current commands are read-only; delete and restore are not implemented yet
+- restore is not implemented yet
 - the tool reads Codex local storage directly, so future Codex schema changes may require updates here
 - there is no Codex app UI integration yet
 - there is no Windows or Linux support in v1
