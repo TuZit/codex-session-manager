@@ -10,8 +10,9 @@ import { listSessions } from './core/session-query.js';
 
 const MAX_TITLE_DISPLAY = 55;
 
-function truncate(str: string, max: number): string {
-  return str.length > max ? `${str.slice(0, max)}…` : str;
+function truncate(str: string | null | undefined, max: number): string {
+  const s = str ?? '(no title)';
+  return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
 function formatUpdatedAt(unixSeconds: number): string {
