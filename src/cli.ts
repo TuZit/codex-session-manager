@@ -8,6 +8,7 @@ import { runDeleteCommand } from './commands/delete.js';
 import { runListCommand } from './commands/list.js';
 import { runRestoreCommand } from './commands/restore.js';
 import { runSearchCommand } from './commands/search.js';
+import { runTui } from './tui.js';
 
 export type CliIO = {
   stderr: (chunk: string) => void;
@@ -29,7 +30,11 @@ Available today:
 `;
 
 export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<number> {
-  if (argv.length === 0 || argv.includes('--help') || argv.includes('-h')) {
+  if (argv.length === 0) {
+    return runTui();
+  }
+
+  if (argv.includes('--help') || argv.includes('-h')) {
     io.stdout(`${HELP_TEXT}\n`);
     return 0;
   }
