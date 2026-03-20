@@ -198,6 +198,101 @@ async function tuiDoctor(): Promise<void> {
   p.note(lines.join('\n'), 'Doctor report');
 }
 
+async function tuiBatchDelete(): Promise<void> {
+  const s = p.spinner();
+  s.start('Đang tải danh sách session…');
+
+  let sessions: Awaited<ReturnType<typeof listSessions>>;
+  try {
+    const paths = resolveCodexHome();
+    sessions = await listSessions(paths);
+    s.stop(`${sessions.length} session`);
+  } catch (error) {
+    s.stop('Lỗi');
+    p.log.error(error instanceof Error ? error.message : String(error));
+    return;
+  }
+
+  if (sessions.length === 0) {
+    p.log.info('Không có session nào để xoá.');
+    return;
+  }
+
+  const selected = await p.multiselect({
+    message: 'Chọn các session muốn xoá (Space để chọn, Enter để xác nhận):',
+    options: sessions.map((sess) => ({
+      label: `${sess.id.slice(0, SHORT_ID_LEN)}  ${truncate(sess.title, MAX_TITLE_DISPLAY)}`,
+      value: sess.id,
+    })),
+    required: true,
+  });
+
+  if (p.isCancel(selected)) return;
+
+  const ids = selected as string[];
+
+  const deleteMode = await p.select({
+    message: `Kiểu xoá cho ${ids.length} session:`,
+    options: [
+      {
+        hint: 'Ẩn session, dữ liệu vẫn còn (có thể restore)',
+        label: 'Soft delete (archive)',
+        value: 'soft',
+      },
+      {
+        hint: 'Xoá hoàn toàn, tạo backup trước',
+        label: 'Hard delete (xoá hẳn)',
+        value: 'hard',
+      },
+    ],
+  });
+
+  if (p.isCancel(deleteMode)) return;
+
+  const confirmed = await p.confirm({
+    initialValue: false,
+    message: `Xác nhận ${deleteMode === 'soft' ? 'archive' : 'xoá hẳn'} ${ids.length} session?`,
+  });
+
+  if (p.isCancel(confirmed) || !confirmed) {
+    p.log.warn('Đã huỷ.');
+    return;
+  }
+
+  let ok = 0;
+  let fail = 0;
+
+  for (const id of ids) {
+    const sess = sessions.find((s) => s.id === id);
+    const label = sess ? truncate(sess.title, 40) : id.slice(0, SHORT_ID_LEN);
+    const spin = p.spinner();
+    spin.start(`Đang xử lý: ${label}`);
+
+    const lines: string[] = [];
+    const code = await runDeleteCommand({
+      apply: true,
+      id,
+      io: {
+        stderr: (chunk) => lines.push(chunk.trim()),
+        stdout: (chunk) => lines.push(chunk.trim()),
+      },
+      json: false,
+      soft: deleteMode === 'soft',
+      yes: true,
+    });
+
+    if (code === 0) {
+      spin.stop(`✓ ${label}`);
+      ok++;
+    } else {
+      spin.stop(`✗ ${label}: ${lines.join(' ')}`);
+      fail++;
+    }
+  }
+
+  p.log.info(`Hoàn thành: ${ok} thành công, ${fail} lỗi.`);
+}
+
 export async function runTui(): Promise<number> {
   p.intro(' Codex Session Manager ');
 
@@ -208,7 +303,8 @@ export async function runTui(): Promise<number> {
       options: [
         { label: 'List sessions', value: 'list' },
         { label: 'Search sessions', value: 'search' },
-        { label: 'Delete session', value: 'delete' },
+        { label: 'Delete session (single)', value: 'delete' },
+        { label: 'Batch delete (chọn nhiều)', value: 'batch-delete' },
         { label: 'Restore session', value: 'restore' },
         { label: 'Doctor (kiểm tra store)', value: 'doctor' },
         { label: 'Thoát', value: 'exit' },
@@ -231,6 +327,9 @@ export async function runTui(): Promise<number> {
         break;
       case 'delete':
         await tuiDelete();
+        break;
+      case 'batch-delete':
+        await tuiBatchDelete();
         break;
       case 'restore':
         await tuiRestore();
