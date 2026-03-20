@@ -1,0 +1,30 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git worktree:*)",
+      "Bash(git branch:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"fix: list shows compact id + short title by default:*)",
+      "Bash(git commit -m \"feat: add soft delete \\(archive\\) via --soft flag:*)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(git commit -m \"feat: add interactive TUI menu \\(runs when no args given\\):*)",
+      "Bash(git commit -m \"fix: handle null/undefined session title in TUI:*)",
+      "Bash(sqlite3 ~/.codex/state_5.sqlite \"SELECT id, title FROM threads WHERE archived=0 LIMIT 5;\")",
+      "Bash(git commit -m \"fix: strip newlines & markdown from titles, show short id in list:*)",
+      "Bash(git commit -m \"fix: use sqlite3 JSON mode to parse thread rows safely:*)",
+      "Bash(git commit -m \"feat: add batch delete — multiselect sessions with soft/hard mode:*)",
+      "Bash(npm test:*)",
+      "Bash(git commit -m \"chore: release v0.2.0:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git tag:*)",
+      "Bash(npm pack:*)",
+      "Bash(git commit -m \"refactor: merge delete + batch delete into unified search-then-delete flow:*)"
+    ]
+  }
+}
