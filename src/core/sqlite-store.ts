@@ -198,6 +198,23 @@ COMMIT;
   );
 }
 
+export async function archiveThread(
+  stateDbPath: string,
+  threadId: string,
+  options: {
+    sqlite3Command?: string;
+  } = {},
+): Promise<void> {
+  const quotedId = `'${escapeSqlString(threadId)}'`;
+  const archivedAt = Math.floor(Date.now() / 1000);
+
+  runSqliteText(
+    stateDbPath,
+    `UPDATE threads SET archived = 1, archived_at = ${archivedAt} WHERE id = ${quotedId};`,
+    { command: options.sqlite3Command },
+  );
+}
+
 export async function executeSqlStatements(
   stateDbPath: string,
   sql: string,

@@ -78,6 +78,7 @@ export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<num
         io,
         json: parsed.json,
         query: parsed.positionals[0],
+        soft: parsed.soft,
         title: parsed.title,
         yes: parsed.yes,
       });
@@ -113,6 +114,7 @@ function parseCommandArgs(args: string[]): {
   id?: string;
   json: boolean;
   positionals: string[];
+  soft: boolean;
   title?: string;
   yes: boolean;
 } {
@@ -132,6 +134,9 @@ function parseCommandArgs(args: string[]): {
       json: {
         type: 'boolean',
       },
+      soft: {
+        type: 'boolean',
+      },
       title: {
         type: 'string',
       },
@@ -148,6 +153,7 @@ function parseCommandArgs(args: string[]): {
     id: parsed.values.id,
     json: parsed.values.json ?? false,
     positionals: parsed.positionals,
+    soft: parsed.values.soft ?? false,
     title: parsed.values.title,
     yes: parsed.values.yes ?? false,
   };

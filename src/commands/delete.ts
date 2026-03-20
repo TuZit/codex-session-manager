@@ -1,5 +1,5 @@
 import type { ResolveCodexHomeOptions } from '../core/codex-home.js';
-import { deleteSession } from '../core/delete-session.js';
+import { archiveSession, deleteSession } from '../core/delete-session.js';
 
 type DeleteIo = {
   stderr: (chunk: string) => void;
@@ -17,6 +17,7 @@ type DeleteCommandOptions = ResolveCodexHomeOptions & {
   io?: DeleteIo;
   json?: boolean;
   query?: string;
+  soft?: boolean;
   sqlite3Command?: string;
   title?: string;
   yes?: boolean;
@@ -42,10 +43,47 @@ function renderDeleteText(result: Awaited<ReturnType<typeof deleteSession>>): st
   ].join('\n');
 }
 
+function renderArchiveText(result: Awaited<ReturnType<typeof archiveSession>>): string {
+  if (result.mode === 'preview') {
+    return [
+      'Preview archive (soft delete)',
+      `sessionId: ${result.sessionId}`,
+      `title: ${result.title}`,
+      'Run again with --apply --yes to archive the session.',
+    ].join('\n');
+  }
+
+  return [
+    'Archived session (soft deleted)',
+    `sessionId: ${result.sessionId}`,
+    `title: ${result.title}`,
+  ].join('\n');
+}
+
 export async function runDeleteCommand(options: DeleteCommandOptions): Promise<number> {
   const io = options.io ?? defaultIo;
 
   try {
+    if (options.soft) {
+      const result = await archiveSession({
+        apply: options.apply,
+        codexHome: options.codexHome,
+        id: options.id,
+        query: options.query,
+        sqlite3Command: options.sqlite3Command,
+        title: options.title,
+        yes: options.yes,
+      });
+
+      if (options.json) {
+        io.stdout(`${JSON.stringify(result)}\n`);
+        return 0;
+      }
+
+      io.stdout(`${renderArchiveText(result)}\n`);
+      return 0;
+    }
+
     const result = await deleteSession({
       apply: options.apply,
       codexHome: options.codexHome,
