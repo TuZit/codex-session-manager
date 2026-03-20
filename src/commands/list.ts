@@ -13,10 +13,19 @@ const defaultIo: CommandIo = {
   stdout: (chunk) => process.stdout.write(chunk),
 };
 
+const SHORT_ID_LEN = 8;
 const MAX_TITLE_LEN = 60;
 
-function shortTitle(title: string): string {
-  return title.length > MAX_TITLE_LEN ? `${title.slice(0, MAX_TITLE_LEN)}…` : title;
+function shortId(id: string): string {
+  return id.slice(0, SHORT_ID_LEN);
+}
+
+function shortTitle(title: string | null | undefined): string {
+  const clean = (title ?? '(no title)')
+    .replace(/\s*\n\s*/g, ' ')   // collapse newlines to space
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // strip markdown links
+    .trim();
+  return clean.length > MAX_TITLE_LEN ? `${clean.slice(0, MAX_TITLE_LEN)}…` : clean;
 }
 
 function renderSessionsText(
@@ -27,7 +36,7 @@ function renderSessionsText(
     .map((session) =>
       verbose
         ? `${session.id}  ${session.title}  updated=${session.updatedAt}  history=${session.historyCount}  rollout=${session.hasRollout ? 'yes' : 'no'}`
-        : `${session.id}  ${shortTitle(session.title)}`,
+        : `${shortId(session.id)}  ${shortTitle(session.title)}`,
     )
     .join('\n');
 }

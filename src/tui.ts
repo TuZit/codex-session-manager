@@ -2,22 +2,26 @@ import * as p from '@clack/prompts';
 
 import { runDoctorCommand } from './commands/doctor.js';
 import { runDeleteCommand } from './commands/delete.js';
-import { runListCommand } from './commands/list.js';
 import { runRestoreCommand } from './commands/restore.js';
 import { runSearchCommand } from './commands/search.js';
 import { resolveCodexHome } from './core/codex-home.js';
 import { listSessions } from './core/session-query.js';
 
+const SHORT_ID_LEN = 8;
 const MAX_TITLE_DISPLAY = 55;
 
+function cleanTitle(str: string | null | undefined): string {
+  return (str ?? '(no title)')
+    .replace(/\s*\n\s*/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .trim();
+}
+
 function truncate(str: string | null | undefined, max: number): string {
-  const s = str ?? '(no title)';
+  const s = cleanTitle(str);
   return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
-function formatUpdatedAt(unixSeconds: number): string {
-  return new Date(unixSeconds * 1000).toLocaleString();
-}
 
 async function tuiList(): Promise<void> {
   const s = p.spinner();
@@ -34,9 +38,9 @@ async function tuiList(): Promise<void> {
     }
 
     const rows = sessions.map((sess) => {
+      const id = sess.id.slice(0, SHORT_ID_LEN);
       const title = truncate(sess.title, MAX_TITLE_DISPLAY);
-      const updated = formatUpdatedAt(sess.updatedAt);
-      return `${sess.id}  ${title}  (${updated})`;
+      return `${id}  ${title}`;
     });
 
     p.note(rows.join('\n'), 'Danh sách session');
