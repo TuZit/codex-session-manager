@@ -1,8 +1,18 @@
 {
   "name": "codex-session-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A CLI for inspecting and safely managing local Codex sessions.",
   "type": "module",
+  "author": "TuZit",
+  "license": "MIT",
+  "homepage": "https://github.com/TuZit/codex-session-manager#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TuZit/codex-session-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TuZit/codex-session-manager/issues"
+  },
   "bin": {
     "codex-session-manager": "dist/cli.js"
   },
@@ -22,9 +32,10 @@
   "keywords": [
     "codex",
     "cli",
-    "sessions"
+    "sessions",
+    "openai",
+    "tui"
   ],
-  "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.0.0",
     "tsx": "^4.20.6",
