@@ -43,6 +43,7 @@ export async function runCli(argv: string[], io: CliIO = defaultIo): Promise<num
         codexHome: parsed.codexHome,
         io,
         json: parsed.json,
+        verbose: parsed.verbose,
       });
     }
     case 'search': {
@@ -114,6 +115,7 @@ function parseCommandArgs(args: string[]): {
   json: boolean;
   positionals: string[];
   title?: string;
+  verbose: boolean;
   yes: boolean;
 } {
   const parsed = parseArgs({
@@ -135,6 +137,10 @@ function parseCommandArgs(args: string[]): {
       title: {
         type: 'string',
       },
+      verbose: {
+        short: 'v',
+        type: 'boolean',
+      },
       yes: {
         type: 'boolean',
       },
@@ -149,6 +155,7 @@ function parseCommandArgs(args: string[]): {
     json: parsed.values.json ?? false,
     positionals: parsed.positionals,
     title: parsed.values.title,
+    verbose: parsed.values.verbose ?? false,
     yes: parsed.values.yes ?? false,
   };
 }
