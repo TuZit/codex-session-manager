@@ -8,7 +8,7 @@ import type { HistoryEntry, SessionIndexEntry } from './jsonl-store.js';
 import { partitionJsonlLines, rewriteJsonlFile } from './jsonl-store.js';
 import { validateCodexSchema } from './schema.js';
 import { listSessions } from './session-query.js';
-import { deleteThreadData, getThreadById, snapshotSessionDeleteRows } from './sqlite-store.js';
+import { archiveThread, deleteThreadData, getThreadById, snapshotSessionDeleteRows } from './sqlite-store.js';
 
 const DEFAULT_GUARD_WINDOW_SECONDS = 60;
 
@@ -94,6 +94,66 @@ function sessionIndexBelongsToSession(sessionId: string, line: string): boolean 
 
 function historyBelongsToSession(sessionId: string, line: string): boolean {
   return (JSON.parse(line) as HistoryEntry).session_id === sessionId;
+}
+
+export type ArchiveSessionResult = {
+  mode: 'apply' | 'preview';
+  ok: true;
+  sessionId: string;
+  title: string;
+};
+
+type ArchiveSessionOptions = ResolveCodexHomeOptions & {
+  apply?: boolean;
+  guardWindowSeconds?: number;
+  id?: string;
+  now?: Date;
+  query?: string;
+  sqlite3Command?: string;
+  title?: string;
+  yes?: boolean;
+};
+
+export async function archiveSession(
+  options: ArchiveSessionOptions,
+): Promise<ArchiveSessionResult> {
+  const paths = resolveCodexHome(options);
+
+  await assertCodexStoreFiles(paths);
+  await validateCodexSchema(paths.stateDbPath, { sqlite3Command: options.sqlite3Command });
+
+  const sessions = await listSessions(paths);
+  const target = resolveDeleteTarget(sessions, options);
+
+  if (!target) {
+    throw new Error('Could not resolve a session to archive.');
+  }
+
+  assertNotRecentlyActive(target.updatedAt, options);
+
+  if (!options.apply) {
+    return {
+      mode: 'preview',
+      ok: true,
+      sessionId: target.id,
+      title: target.title,
+    };
+  }
+
+  if (!options.yes) {
+    throw new Error('Archive apply mode requires --yes.');
+  }
+
+  await archiveThread(paths.stateDbPath, target.id, {
+    sqlite3Command: options.sqlite3Command,
+  });
+
+  return {
+    mode: 'apply',
+    ok: true,
+    sessionId: target.id,
+    title: target.title,
+  };
 }
 
 export async function deleteSession(
