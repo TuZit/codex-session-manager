@@ -13,13 +13,21 @@ const defaultIo: CommandIo = {
   stdout: (chunk) => process.stdout.write(chunk),
 };
 
+const MAX_TITLE_LEN = 60;
+
+function shortTitle(title: string): string {
+  return title.length > MAX_TITLE_LEN ? `${title.slice(0, MAX_TITLE_LEN)}…` : title;
+}
+
 function renderSessionsText(
   sessions: Awaited<ReturnType<typeof listSessions>>,
+  verbose: boolean,
 ): string {
   return sessions
-    .map(
-      (session) =>
-        `${session.id}  ${session.title}  updated=${session.updatedAt}  history=${session.historyCount}  rollout=${session.hasRollout ? 'yes' : 'no'}`,
+    .map((session) =>
+      verbose
+        ? `${session.id}  ${session.title}  updated=${session.updatedAt}  history=${session.historyCount}  rollout=${session.hasRollout ? 'yes' : 'no'}`
+        : `${session.id}  ${shortTitle(session.title)}`,
     )
     .join('\n');
 }
@@ -28,6 +36,7 @@ export async function runListCommand(
   options: ResolveCodexHomeOptions & {
     io?: CommandIo;
     json?: boolean;
+    verbose?: boolean;
   } = {},
 ): Promise<number> {
   const io = options.io ?? defaultIo;
@@ -43,6 +52,6 @@ export async function runListCommand(
     return 0;
   }
 
-  io.stdout(`${renderSessionsText(sessions)}\n`);
+  io.stdout(`${renderSessionsText(sessions, options.verbose ?? false)}\n`);
   return 0;
 }
