@@ -31,7 +31,13 @@ The CLI currently validates and reads these local Codex files:
 
 ## Installation
 
-This repo is ready for npm packaging, but if the package is not published yet you should run it locally from source.
+gp
+
+### Quick start
+
+```bash
+npx @atus/codex-session-manager
+```
 
 ### Local development
 

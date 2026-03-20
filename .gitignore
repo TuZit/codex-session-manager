@@ -2,3 +2,6 @@
 .worktrees/
 dist/
 node_modules/
+.claude
+docs
+.npmrc

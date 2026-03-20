@@ -1,6 +1,6 @@
 {
-  "name": "codex-session-manager",
-  "version": "0.2.0",
+  "name": "@tuzitt/codex-session-manager",
+  "version": "0.0.1",
   "description": "A CLI for inspecting and safely managing local Codex sessions.",
   "type": "module",
   "author": "TuZit",
@@ -24,10 +24,10 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsx src/cli.ts",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "build": "./node_modules/.bin/tsc -p tsconfig.json",
+    "dev": "./node_modules/.bin/tsx src/cli.ts",
+    "test": "./node_modules/.bin/vitest run",
+    "typecheck": "./node_modules/.bin/tsc --noEmit -p tsconfig.json"
   },
   "keywords": [
     "codex",
